@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context" 
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans 
+       http://www.springframework.org/schema/beans/spring-beans.xsd 
+       http://www.springframework.org/schema/context 
+       http://www.springframework.org/schema/context/spring-context.xsd 
+       http://www.springframework.org/schema/tx 
+       http://www.springframework.org/schema/tx/spring-tx.xsd
+       http://www.springframework.org/schema/aop
+       http://www.springframework.org/schema/aop/spring-aop.xsd">
+	
+	<!-- 配置整合mybatis过程 -->
+	<!-- 1、配置数据库相关参数 -->
+	<context:property-placeholder location="classpath:jdbc.properties" />
+
+	<!-- 最快的数据库连接池Hikari Datasource -->
+	<bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource" destroy-method="close">
+		<!-- <property name="driverClassName" value="${db.driverClass}" /> --> <!-- 无需指定，除非系统无法自动识别 -->
+		<property name="jdbcUrl" value="${datasource.url}" />
+		<property name="username" value="${datasource.username}" />
+		<property name="password" value="${datasource.password}" />
+		<!-- 连接只读数据库时配置为true， 保证安全 -->
+		<property name="readOnly" value="false" />
+		<!-- 等待连接池分配连接的最大时长（毫秒），超过这个时长还没可用的连接则发生SQLException， 缺省:30秒 -->
+		<property name="connectionTimeout" value="30000" />
+		<!-- 一个连接idle状态的最大时长（毫秒），超时则被释放（retired），缺省:10分钟 -->
+		<property name="idleTimeout" value="600000" />
+		<!-- 一个连接的生命时长（毫秒），超时而且没被使用则被释放（retired），缺省:30分钟，建议设置比数据库超时时长少30秒，参考MySQL 
+			wait_timeout参数（show variables like '%timeout%';） -->
+		<property name="maxLifetime" value="1800000" />
+		<!-- 连接池中允许的最大连接数。缺省值：10；推荐的公式：((core_count * 2) + effective_spindle_count) -->
+		<property name="maximumPoolSize" value="15" />
+	</bean>
+	
+	<!-- 2、配置数据库连接池 -->
+	<bean id="dataSourceDruid" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
+		<property name="driverClassName" value="${datasource.driver}" />
+		<property name="url" value="${datasource.url}" />
+		<property name="username" value="${datasource.username}" />
+		<property name="password" value="${datasource.password}" />
+		<!-- 配置初始化大小、最小、最大 -->
+		<property name="initialSize" value="${datasource.initialSize}" />
+		<property name="minIdle" value="${datasource.minIdle}" />
+		<property name="maxActive" value="${datasource.maxActive}" />
+		<!-- 配置获取连接等待超时的时间 -->
+		<property name="maxWait" value="${datasource.maxWait}" />
+		<!-- 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒 -->
+		<property name="timeBetweenEvictionRunsMillis" value="${datasource.timeBetweenEvictionRunsMillis}" />
+		<!-- 配置一个连接在池中最小生存的时间，单位是毫秒 -->
+		<property name="minEvictableIdleTimeMillis" value="${datasource.minEvictableIdleTimeMillis}" />
+		<property name="testWhileIdle" value="${datasource.testWhileIdle}" />
+		<!-- 这里建议配置为TRUE，防止取到的连接不可用 -->
+		<property name="testOnBorrow" value="${datasource.testOnBorrow}" />
+		<property name="testOnReturn" value="${datasource.testOnReturn}" />
+		<!-- 打开PSCache，并且指定每个连接上PSCache的大小 -->
+		<property name="poolPreparedStatements" value="${datasource.poolPreparedStatements}" />
+		<property name="maxPoolPreparedStatementPerConnectionSize" value="${datasource.maxPoolPreparedStatementPerConnectionSize}" />
+		<!-- 这里配置提交方式，默认就是TRUE，可以不用配置 -->
+		<property name="defaultAutoCommit" value="${datasource.defaultAutoCommit}" />
+		<!-- 验证连接有效与否的SQL，不同的数据配置不同 -->
+		<property name="validationQuery" value="${datasource.validationQuery}" />
+		<property name="filters" value="${datasource.filters}" />
+		<property name="proxyFilters">
+			<list>
+				<ref bean="logFilter" />
+			</list>
+		</property>
+	</bean>
+
+	<bean id="logFilter" class="com.alibaba.druid.filter.logging.Slf4jLogFilter">
+		<property name="statementExecutableSqlLogEnable" value="false" />
+	</bean>
+	<!-- 3、配置sqlSessionFactory对象 -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<!--注入数据库连接池 -->
+		<property name="dataSource" ref="dataSource" />
+		<!-- 配置mybatis全局配置文件：mybatis-config.xml -->
+		<property name="configLocation"
+			value="classpath:mybatis-config.xml" />
+		<!-- 扫描entity包，使用别名，多个用;隔开 -->
+		<property name="typeAliasesPackage" value="com.cll.entity" />
+		<!-- 扫描sql配置文件:mapper需要的xml文件
+		<property name="mapperLocations" value="classpath:mapper/*.xml" /> -->
+	</bean>
+
+	<!-- 4.配置扫描Dao接口包，动态实现Dao接口，注入到spring容器 -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<!-- 注入sqlSessionFactory -->
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory" />
+		<!--给出需要扫描的Dao接口 -->
+		<property name="basePackage" value="com.cll.dao" />
+	</bean>
+     <!-- 配置SqlSessionTemplate -->
+     <bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate" scope="prototype">
+        <!-- 通过构造函数注入 -->
+        <constructor-arg name="sqlSessionFactory" ref="sqlSessionFactory" />
+     </bean>
+     
+    <!-- 1.配置事务管理器：编程式事物 -->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <!-- 注入数据库连接池 -->
+        <property name="dataSource" ref="dataSource" />
+    </bean>
+    <bean id="transactionTemplate" class="org.springframework.transaction.support.TransactionTemplate">
+	 	<property name="transactionManager" ref="transactionManager"/>
+	</bean>
+    
+    <bean id="daoSupport" class="com.cll.dao.DaoSupport"/> 
+    
+    <!-- 2.基于注解的声明式事务 -->
+    <tx:annotation-driven  proxy-target-class="true" transaction-manager="transactionManager" />
+    
+    <!-- 3.AOP -->
+	<!--对应的事物通知和切面配置 -->
+	<tx:advice id="txAdvice" transaction-manager="transactionManager">
+		<tx:attributes>
+			<!-- propagation :事务传播行为 isolation :事务的隔离级别 read-only :只读
+			 rollback-for:发生哪些异常回滚  no-rollback-for :发生哪些异常不回滚 timeout :过期信息 -->
+			<tx:method name="insert,batchInsert,update,batchUpdate,delete,batchDelete,submit" propagation="REQUIRED" />
+		</tx:attributes>
+	</tx:advice>
+	<!-- 配置切面 -->
+	<aop:config>
+		<!-- 配置切入点 -->
+		<aop:pointcut id="pointcut1" expression="execution(* com.cll.dao.DaoSupport.*(..))" />
+		<!-- 配置切面 -->
+		<aop:advisor advice-ref="txAdvice" pointcut-ref="pointcut1" />
+	</aop:config>
+	<aop:config>
+		<!-- 配置切入点 -->
+		<aop:pointcut id="pointcut2" expression="execution(* org.mybatis.spring.SqlSessionTemplate.*(..))" />
+		<!-- 配置切面 -->
+		<aop:advisor advice-ref="txAdvice" pointcut-ref="pointcut2" />
+	</aop:config>
+</beans>
