@@ -1,5 +1,5 @@
 #!/bin/bash
-RESINWEBINF=/home/v31/common-biz
+RESINWEBINF=`pwd`/common
 LIBDIRS=${RESINWEBINF}/lib
 CP=.:${RESINWEBINF}/resources
 for Jars in `ls ${LIBDIRS}`

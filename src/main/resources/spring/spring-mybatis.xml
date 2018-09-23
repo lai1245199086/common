@@ -15,7 +15,7 @@
 	
 	<!-- 配置整合mybatis过程 -->
 	<!-- 1、配置数据库相关参数 -->
-	<context:property-placeholder location="classpath:jdbc.properties" />
+	<context:property-placeholder location="classpath:${package.environment}/jdbc-${package.environment}.properties" />
 
 	<!-- 最快的数据库连接池Hikari Datasource -->
 	<bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource" destroy-method="close">

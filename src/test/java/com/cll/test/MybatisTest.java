@@ -27,7 +27,7 @@ import com.cll.entity.Seckill;
 
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration("classpath:springapplicationContext.xml")
+@ContextConfiguration("classpath:applicationContext.xml")
 public class MybatisTest{
 	Logger log = LoggerFactory.getLogger(getClass());
 	@Resource

@@ -17,7 +17,7 @@ import com.cll.dao.JedisClientSingle;
 import com.cll.service.AddService;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration("classpath:springapplicationContext.xml")
+@ContextConfiguration("classpath:applicationContext.xml")
 public class RedisTest {
 	Logger log = LoggerFactory.getLogger(getClass());
 	@Resource
@@ -33,7 +33,8 @@ public class RedisTest {
 		log.debug("setValueResult ==> " + setValueResult);
 		Set<String> keys = addService.getAllKeys();
 		for (String key : keys) {
-			log.debug(key + " ==> " + addService.getName(key));
+			//log.debug(key + " ==> " + addService.getName(key));
+			log.debug(key);
 		}
 	}
 
