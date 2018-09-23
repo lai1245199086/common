@@ -12,7 +12,7 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 public class StartMain {
 	static final Logger log = LoggerFactory.getLogger(StartMain.class);
 	public static void main(String[] args) {
-		ApplicationContext context = new ClassPathXmlApplicationContext("classpath:springapplicationContext.xml");
+		ApplicationContext context = new ClassPathXmlApplicationContext("classpath:applicationContext.xml");
 		log.info("context DisplayName:"+ context.getDisplayName());
 		log.info("The Main Class Is Running....");
 	}
