@@ -1,7 +1,7 @@
 #!/bin/bash
-RESINWEBINF=`pwd`/common
+RESINWEBINF=`pwd`
 LIBDIRS=${RESINWEBINF}/lib
-CP=.:${RESINWEBINF}/resources
+CP=.:${RESINWEBINF}/conf
 for Jars in `ls ${LIBDIRS}`
 do
 CP=${CP}:${LIBDIRS}/${Jars}
